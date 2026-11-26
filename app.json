@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "Lumen Console",
+    "slug": "lumen-console",
+    "scheme": "lumenconsole",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#060B17",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#060B17"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "tech.luminare.console",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "tech.luminare.console",
+      "adaptiveIcon": {
+        "backgroundColor": "#060B17",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "Lumen Console",
+      "shortName": "Console",
+      "lang": "en",
+      "description": "A mobile app for Pterodactyl and Hydrodactyl panels: servers, live console, files, backups, admin tools, node health and local alerts.",
+      "themeColor": "#060B17",
+      "backgroundColor": "#060B17"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-background-task",
+      "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "color": "#5BDFFF"
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Sora-Variable.ttf"
+          ]
+        }
+      ]
+    ]
+  }
+}

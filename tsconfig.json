@@ -1,0 +1,23 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "resolveJsonModule": true,
+    "types": [
+      "jest",
+      "node"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "web-build",
+    "dist",
+    "coverage",
+    "jest.config.js",
+    "babel.config.js",
+    "metro.config.js",
+    "android",
+    "ios",
+    "e2e/screenshots"
+  ]
+}
