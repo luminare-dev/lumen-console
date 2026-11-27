@@ -142,7 +142,8 @@ test.describe('server', () => {
     await page.getByTestId('file-menu-server.jar').click();
     const popup = page.waitForEvent('popup');
     await page.getByTestId('file-download').click();
-    expect((await popup).url()).toContain('https://node1.example.net:8080/download/file?token=');
+    const opened = await popup;
+    await opened.waitForURL(/^https:\/\/node1\.example\.net:8080\/download\/file\?token=/);
 
     const chooser = page.waitForEvent('filechooser');
     await page.getByTestId('files-upload').click();
@@ -240,6 +241,7 @@ test.describe('admin', () => {
     await page.getByTestId('row-user-2').click();
     await expect(page.getByTestId('user-2fa')).toHaveText('2FA on');
     await page.getByTestId('user-edit').click();
+    await expect(page.getByTestId('user-first')).toHaveValue('Ben');
     await page.getByTestId('user-first').fill('Benedikt');
     await page.getByTestId('form-submit').click();
     expect(mock.data.users.find((u) => u.id === 2)?.first_name).toBe('Benedikt');
