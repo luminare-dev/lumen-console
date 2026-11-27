@@ -140,10 +140,9 @@ test.describe('server', () => {
     await openServer(page);
     await page.getByTestId('open-files').click();
     await page.getByTestId('file-menu-server.jar').click();
-    const popup = page.waitForEvent('popup');
+    // The signed link opens in a new tab, which downloads the file from the node.
     await page.getByTestId('file-download').click();
-    const opened = await popup;
-    await opened.waitForURL(/^https:\/\/node1\.example\.net:8080\/download\/file\?token=/);
+    await expect.poll(() => mock.log.filter((l) => l.startsWith('node1 GET /download/file'))).toHaveLength(1);
 
     const chooser = page.waitForEvent('filechooser');
     await page.getByTestId('files-upload').click();

@@ -212,12 +212,12 @@ export function AdminUserFormScreen({ id }: { id?: number }) {
       {!loaded ? <Loading /> : null}
       {loaded ? (
         <>
-      <Field label={t('admin.email')} value={form.email} onChangeText={(email) => set({ email })} keyboard="email-address" testID="user-email" />
-      <Field label={t('admin.username')} value={form.username} onChangeText={(username) => set({ username })} testID="user-username" />
-      <Field label={t('admin.firstName')} value={form.first_name} onChangeText={(first_name) => set({ first_name })} autoCapitalize="words" testID="user-first" />
-      <Field label={t('admin.lastName')} value={form.last_name} onChangeText={(last_name) => set({ last_name })} autoCapitalize="words" testID="user-last" />
-      <Field label={t('admin.password')} value={form.password} onChangeText={(password) => set({ password })} secure hint={id === undefined ? t('admin.passwordNewHint') : t('admin.passwordEditHint')} testID="user-password" />
-      <ToggleRow label={t('admin.rootAdmin')} value={form.root_admin} onChange={(root_admin) => set({ root_admin })} testID="user-admin" />
+          <Field label={t('admin.email')} value={form.email} onChangeText={(email) => set({ email })} keyboard="email-address" testID="user-email" />
+          <Field label={t('admin.username')} value={form.username} onChangeText={(username) => set({ username })} testID="user-username" />
+          <Field label={t('admin.firstName')} value={form.first_name} onChangeText={(first_name) => set({ first_name })} autoCapitalize="words" testID="user-first" />
+          <Field label={t('admin.lastName')} value={form.last_name} onChangeText={(last_name) => set({ last_name })} autoCapitalize="words" testID="user-last" />
+          <Field label={t('admin.password')} value={form.password} onChangeText={(password) => set({ password })} secure hint={id === undefined ? t('admin.passwordNewHint') : t('admin.passwordEditHint')} testID="user-password" />
+          <ToggleRow label={t('admin.rootAdmin')} value={form.root_admin} onChange={(root_admin) => set({ root_admin })} testID="user-admin" />
         </>
       ) : null}
       {error ? <ErrorPanel error={error} /> : null}
