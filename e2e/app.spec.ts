@@ -205,7 +205,14 @@ test.describe('server', () => {
     await expect(page.getByTestId('subuser-ben')).toContainText('2FA on');
     await page.getByTestId('tab-settings').click();
     await page.getByTestId('settings-account').click();
-    await expect(page.getByTestId('account-2fa')).toHaveText('Unknown');
+    await expect(page.getByTestId('account-2fa')).toHaveText('See panel');
+    await expect(page.getByTestId('account-2fa-help')).toContainText('account page in the panel');
+    await expect(page.getByTestId('account-2fa-why-body')).toBeHidden();
+    await page.getByTestId('account-2fa-why').click();
+    await expect(page.getByTestId('account-2fa-why-body')).toContainText('new 2FA setup secret');
+    // The panel's account page opens in a new tab.
+    await page.getByTestId('account-open-panel').click();
+    await expect.poll(() => mock.log).toContain('GET /account');
     await expect(page.getByTestId('api-key-ptlc_mockKey02')).toContainText('198.51.100.7');
   });
 });
@@ -298,6 +305,7 @@ test.describe('admin', () => {
     await page.getByTestId('tab-settings').click();
     await page.getByTestId('settings-account').click();
     await expect(page.getByTestId('account-2fa')).toHaveText('2FA on');
+    await expect(page.getByTestId('account-2fa-help')).toBeHidden();
   });
 });
 

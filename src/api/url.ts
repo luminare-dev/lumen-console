@@ -55,3 +55,8 @@ export function daemonOrigin(node: { fqdn: string; scheme: string; daemon_listen
 export function hostOf(origin: string): string {
   return origin.replace(/^https:\/\//, '');
 }
+
+/** The panel's own account page (2FA, password, e-mail), opened in the browser. */
+export function panelAccountUrl(origin: string): string {
+  return `${origin.replace(/\/+$/, '')}/account`;
+}

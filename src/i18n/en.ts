@@ -221,9 +221,14 @@ export const en = {
   'account.twoFactor': 'Two-factor authentication',
   'account.twoFactorOn': '2FA on',
   'account.twoFactorOff': '2FA off',
-  'account.twoFactorUnknown': 'Unknown',
-  'account.twoFactorNote':
-    'The client API reports 2FA only through its setup endpoint, which creates a new secret, so the app does not ask. With an application key the status is read from the admin API.',
+  'account.twoFactorHiddenBadge': 'See panel',
+  'account.twoFactorHidden': 'The app doesn’t read this for your account. Your account page in the panel shows whether 2FA is on.',
+  'account.openPanel': 'Open account page',
+  'account.why': 'Why?',
+  'account.twoFactorWhyNoKey':
+    'The panel’s Client API only tells the 2FA status through the call that starts a 2FA setup, and that call creates a new 2FA setup secret every time. To leave your account untouched, the app doesn’t make that call. If you are an admin of this panel, add an Application API key (Settings → Panels); the app then reads the status from the admin API.',
+  'account.twoFactorWhyKeyCannotRead':
+    'The panel’s Client API only tells the 2FA status through the call that starts a 2FA setup, and that call creates a new 2FA setup secret every time, so the app doesn’t make it. The Application API key of this panel could not read your user; give it read access to Users and the status shows up here.',
   'account.apiKeys': 'API keys',
   'account.lastUsed': 'used {date}',
   'account.neverUsed': 'never used',

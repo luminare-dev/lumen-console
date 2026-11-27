@@ -223,9 +223,14 @@ export const de: Record<keyof typeof en, string> = {
   'account.twoFactor': 'Zwei-Faktor-Authentifizierung',
   'account.twoFactorOn': '2FA an',
   'account.twoFactorOff': '2FA aus',
-  'account.twoFactorUnknown': 'Unbekannt',
-  'account.twoFactorNote':
-    'Die Client-API meldet 2FA nur über ihren Einrichtungs-Endpunkt, der ein neues Geheimnis erzeugt, daher fragt die App nicht. Mit einem Application-Schlüssel wird der Status aus der Admin-API gelesen.',
+  'account.twoFactorHiddenBadge': 'Im Panel sehen',
+  'account.twoFactorHidden': 'Die App liest das für dein Konto nicht aus. Deine Kontoseite im Panel zeigt, ob 2FA an ist.',
+  'account.openPanel': 'Kontoseite öffnen',
+  'account.why': 'Warum?',
+  'account.twoFactorWhyNoKey':
+    'Die Client-API des Panels verrät den 2FA-Status nur über den Aufruf, der eine 2FA-Einrichtung startet, und dieser Aufruf erzeugt jedes Mal ein neues Einrichtungs-Geheimnis. Damit an deinem Konto nichts verändert wird, macht die App diesen Aufruf nicht. Bist du Admin dieses Panels, füge einen Application-API-Schlüssel hinzu (Einstellungen → Panels); dann liest die App den Status über die Admin-API.',
+  'account.twoFactorWhyKeyCannotRead':
+    'Die Client-API des Panels verrät den 2FA-Status nur über den Aufruf, der eine 2FA-Einrichtung startet, und dieser Aufruf erzeugt jedes Mal ein neues Einrichtungs-Geheimnis, daher macht die App ihn nicht. Der Application-API-Schlüssel dieses Panels konnte deinen Benutzer nicht lesen; gib ihm Lesezugriff auf Users, dann erscheint der Status hier.',
   'account.apiKeys': 'API-Schlüssel',
   'account.lastUsed': 'benutzt {date}',
   'account.neverUsed': 'nie benutzt',

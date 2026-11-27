@@ -536,6 +536,22 @@ export function ListRow({
   );
 }
 
+/** A "why?" style toggle: the label opens and closes the details below it. */
+export function Disclosure({ label, children, testID }: { label: string; children: ReactNode; testID?: string }) {
+  const { theme } = useApp();
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ gap: theme.space(1) }}>
+      <Pressable onPress={() => setOpen((o) => !o)} role="button" aria-expanded={open} hitSlop={8} testID={testID} style={{ alignSelf: 'flex-start', paddingVertical: theme.space(1) }}>
+        <T variant="label" tone="accent">
+          {`${open ? '▾' : '▸'} ${label}`}
+        </T>
+      </Pressable>
+      {open ? <View testID={testID ? `${testID}-body` : undefined}>{typeof children === 'string' ? <T variant="muted">{children}</T> : children}</View> : null}
+    </View>
+  );
+}
+
 export function Notice({ children, tone = 'info', testID }: { children: ReactNode; tone?: Tone; testID?: string }) {
   const { theme } = useApp();
   const color = toneColor(theme, tone);

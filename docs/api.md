@@ -131,7 +131,7 @@ allocation from `allocated_resources` against `memory`/`disk`, maintenance mode,
 
 | What | Why |
 |---|---|
-| 2FA state of the own account (client API) | Only `GET /account/two-factor` says it, and that call creates a new TOTP secret as a side effect. With an application key the app reads `2fa` from the user instead; otherwise it shows "unknown". |
+| 2FA state of the own account (client API) | Only `GET /account/two-factor` says it, and that call creates a new TOTP setup secret as a side effect. With an application key the app reads `2fa` from the user instead. Without one (or when the key may not read users) the account screen says so in plain words, offers a button that opens `<panel>/account` in the browser, and explains the reason behind a "Why?" toggle. |
 | Suspending a user account | The panel has no user suspension. The app offers "suspend all servers of this user" instead. |
 | Creating servers, editing build/startup as admin, deleting users or servers | Out of scope for the phone; easy to add later (`POST /servers`, `PATCH /servers/{id}/build`, …). |
 | Creating or rotating database passwords, schedule editing, subuser editing, allocation changes, API key management, SSH keys | Read-only in the app; the panel's web UI covers them. |

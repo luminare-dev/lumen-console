@@ -1,15 +1,18 @@
 import { useState } from 'react';
+import { Linking, View } from 'react-native';
 
 import appConfig from '../../app.json';
 import { backgroundSupported, setBackgroundChecks } from '../alerts/background';
 import type { Thresholds } from '../alerts/evaluate';
+import { panelAccountUrl } from '../api/url';
 import { formatDateTime } from '../i18n';
 import { useNav } from '../navigation';
+import { twoFactorView } from '../state/account';
 import { useApp } from '../state/AppProvider';
 import type { LanguageSetting, ThemeSetting } from '../state/settings';
 import { useResource } from '../state/useResource';
 import { importTokens, PRESET_NAMES, PRESETS, type PresetName } from '../theme/tokens';
-import { Badge, Button, Card, ErrorPanel, Field, KeyValue, ListRow, Loading, Notice, Screen, Section, Segmented, T, ToggleRow } from '../ui/kit';
+import { Badge, Button, Card, Disclosure, ErrorPanel, Field, KeyValue, ListRow, Loading, Notice, Screen, Section, Segmented, T, ToggleRow } from '../ui/kit';
 import { NeedsKey } from './connect';
 
 function NumberField({ label, value, onChange, testID }: { label: string; value: number; onChange: (n: number) => void; testID?: string }) {
@@ -118,14 +121,14 @@ export function SettingsScreen() {
 
 /** The key's account: 2FA (from the application API when there is a key) and its API keys. */
 export function AccountScreen() {
-  const { t, client, admin, language } = useApp();
+  const { t, theme, client, admin, active, language } = useApp();
   const nav = useNav();
   const account = useResource(client, 'account', (c) => c.account());
   const keys = useResource(client, 'apiKeys', (c) => c.apiKeys());
   const id = account.data?.id;
   const asAdmin = useResource(admin && id !== undefined ? admin : null, `user:${id}`, (a) => a.user(id as number));
   const a = account.data;
-  const twoFactor = asAdmin.data?.['2fa'];
+  const twoFactor = twoFactorView({ hasAppKey: admin !== null, value: asAdmin.data?.['2fa'], error: asAdmin.error });
   return (
     <Screen title={t('account.title')} onBack={nav.pop} testID="screen-account">
       {!client ? <NeedsKey /> : null}
@@ -140,14 +143,24 @@ export function AccountScreen() {
           <KeyValue
             label={t('account.twoFactor')}
             value={
-              twoFactor === undefined ? (
-                <Badge label={t('account.twoFactorUnknown')} testID="account-2fa" />
+              twoFactor.state === 'on' || twoFactor.state === 'off' ? (
+                <Badge label={twoFactor.state === 'on' ? t('account.twoFactorOn') : t('account.twoFactorOff')} tone={twoFactor.state === 'on' ? 'success' : 'warning'} testID="account-2fa" />
               ) : (
-                <Badge label={twoFactor ? t('account.twoFactorOn') : t('account.twoFactorOff')} tone={twoFactor ? 'success' : 'warning'} testID="account-2fa" />
+                <Badge label={twoFactor.state === 'loading' ? t('common.loading') : t('account.twoFactorHiddenBadge')} testID="account-2fa" />
               )
             }
           />
-          {twoFactor === undefined ? <T variant="caption">{t('account.twoFactorNote')}</T> : null}
+          {twoFactor.state === 'hidden' ? (
+            <View style={{ gap: theme.space(2) }} testID="account-2fa-help">
+              <T variant="muted">{t('account.twoFactorHidden')}</T>
+              {active ? (
+                <Button label={t('account.openPanel')} kind="secondary" compact onPress={() => void Linking.openURL(panelAccountUrl(active.origin)).catch(() => undefined)} testID="account-open-panel" />
+              ) : null}
+              <Disclosure label={t('account.why')} testID="account-2fa-why">
+                {twoFactor.reason === 'noAppKey' ? t('account.twoFactorWhyNoKey') : t('account.twoFactorWhyKeyCannotRead')}
+              </Disclosure>
+            </View>
+          ) : null}
         </Card>
       ) : null}
       <Section title={t('account.apiKeys')}>

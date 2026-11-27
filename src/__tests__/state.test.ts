@@ -1,8 +1,11 @@
+import { PanelError } from '../api/errors';
+import { panelAccountUrl } from '../api/url';
 import { pickLanguage, translator, formatBytes, formatDuration } from '../i18n';
 import { de } from '../i18n/de';
 import { en } from '../i18n/en';
 import { MOCK_HYDRO_VERSION } from '../mock/fixtures';
 import { createMockPanel } from '../mock/server';
+import { twoFactorView } from '../state/account';
 import { addPanel, apisFor, loadPanels, PANELS_KEY, removePanel, setApplicationKey, setDaemonToken, type KeyValueStore } from '../state/panels';
 import { createMemorySecretStore } from '../state/secrets';
 import { DEFAULT_SETTINGS, sanitizeSettings } from '../state/settings';
@@ -77,6 +80,24 @@ describe('panels', () => {
     expect(await secrets.get(`app.${entry.id}`)).toBeNull();
     expect(await secrets.get(`wings.${entry.id}.1`)).toBeNull();
     expect(await loadPanels(store)).toEqual([]);
+  });
+});
+
+describe('account 2FA', () => {
+  it('shows 2FA only from the admin API and explains why otherwise', () => {
+    expect(twoFactorView({ hasAppKey: false, value: undefined, error: undefined })).toEqual({ state: 'hidden', reason: 'noAppKey' });
+    expect(twoFactorView({ hasAppKey: true, value: undefined, error: undefined })).toEqual({ state: 'loading' });
+    expect(twoFactorView({ hasAppKey: true, value: true, error: undefined })).toEqual({ state: 'on' });
+    expect(twoFactorView({ hasAppKey: true, value: false, error: undefined })).toEqual({ state: 'off' });
+    const forbidden = new PanelError('forbidden', 'HTTP 403', { status: 403 });
+    expect(twoFactorView({ hasAppKey: true, value: undefined, error: forbidden })).toEqual({ state: 'hidden', reason: 'appKeyCannotRead', error: forbidden });
+  });
+
+  it('links to the panel account page and explains it in both languages', () => {
+    expect(panelAccountUrl('https://panel.example.net')).toBe('https://panel.example.net/account');
+    expect(panelAccountUrl('https://panel.example.net:8443/')).toBe('https://panel.example.net:8443/account');
+    expect(translator('en')('account.twoFactorWhyNoKey')).toContain('setup secret');
+    expect(translator('de')('account.twoFactorWhyNoKey')).toContain('Einrichtungs-Geheimnis');
   });
 });
 

@@ -67,5 +67,14 @@ for (const scheme of ['dark', 'light'] as const) {
       await page.getByTestId('tab-settings').click();
       await shot('settings');
     });
+
+    test(`account without an application key (${scheme})`, async ({ page, mock }) => {
+      await connect(page, mock, { name: 'Game panel' });
+      await page.getByTestId('tab-settings').click();
+      await page.getByTestId('settings-account').click();
+      await page.getByTestId('account-2fa-why').click();
+      await expect(page.getByTestId('account-2fa-why-body')).toBeVisible();
+      await page.screenshot({ path: `screenshots/account-${scheme}.png` });
+    });
   });
 }
