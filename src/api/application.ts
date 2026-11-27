@@ -23,6 +23,11 @@ export class ApplicationApi {
     return this.http.origin;
   }
 
+  /** Checks the key with the smallest request an application key can make. */
+  async ping(): Promise<void> {
+    await this.http.page<PanelUser>(`${APPLICATION_PREFIX}/users`, { per_page: 1 });
+  }
+
   // --- Users --------------------------------------------------------------------------------
 
   /** Users, optionally filtered on the panel (e-mail when the search has an @, else user name). */

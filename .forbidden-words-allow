@@ -15,6 +15,7 @@ scripts/forbidden_words.py | * | the check's own rule list, its documentation an
 tests/test_forbidden_words.py | * | test sentences that must trigger the rules
 tests/test_check_pr_title.py | * | test titles that must be rejected for their wording
 scripts/set_byline.py | placeholder | prints the names of the placeholders to fill again after a brand swap
+src/mock/fixtures.ts | placeholder | the invented eggs use the panel's own startup variable syntax ({{SERVER_MEMORY}}), as real eggs do
 LICENSE | sell | the licence grants the right to "sell copies" of the software
 THIRD_PARTY_NOTICES.md | sell | the unchanged MIT notice of the create-expo-app scaffold grants the right to "sell copies"
 package-lock.json | funding | npm copies each dependency's "funding" metadata into the lockfile; generated, not project text

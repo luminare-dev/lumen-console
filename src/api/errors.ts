@@ -35,13 +35,16 @@ export class PanelError extends Error {
   readonly status?: number;
   /** The `detail` of the panel's first error, when it sent one. */
   readonly apiMessage?: string;
+  /** Which key of the connect form the error belongs to, when it is about one. */
+  field?: 'client' | 'application';
 
-  constructor(kind: ErrorKind, message: string, options: { status?: number; apiMessage?: string } = {}) {
+  constructor(kind: ErrorKind, message: string, options: { status?: number; apiMessage?: string; field?: 'client' | 'application' } = {}) {
     super(message);
     this.name = 'PanelError';
     this.kind = kind;
     this.status = options.status;
     this.apiMessage = options.apiMessage;
+    this.field = options.field;
   }
 }
 

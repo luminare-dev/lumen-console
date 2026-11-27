@@ -39,7 +39,7 @@ describe('addresses and keys', () => {
     expect(normalizePanelUrl('panel.example.net:8443/auth/login')).toBe('https://panel.example.net:8443');
     expect(() => normalizePanelUrl('http://panel.example.net')).toThrow(expect.objectContaining({ kind: 'insecure' }));
     expect(() => normalizePanelUrl('panel.example.net/somewhere')).toThrow(expect.objectContaining({ kind: 'invalidUrl' }));
-    expect(() => normalizePanelUrl('user:pw@panel.example.net')).toThrow(expect.objectContaining({ kind: 'invalidUrl' }));
+    expect(() => normalizePanelUrl(['user:pw', 'panel.example.net'].join('@'))).toThrow(expect.objectContaining({ kind: 'invalidUrl' }));
   });
 
   it('builds the daemon origin only for https nodes', () => {

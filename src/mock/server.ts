@@ -64,6 +64,8 @@ export interface MockPanel {
   /** null means the host does not answer (network error). */
   handle(request: MockRequest): MockResponse | null;
   fetch: FetchLike;
+  /** True when a console socket URL belongs to one of this panel's servers. */
+  ownsSocket(url: string): boolean;
   /** Opens a console connection for a socket URL; `send` gets every frame the node sends. */
   openConsole(url: string, send: (text: string) => void, close: (code: number) => void): ConsoleEndpoint;
   socketFactory: SocketFactory;
@@ -157,7 +159,11 @@ export function createMockPanel(options: MockOptions = {}): MockPanel {
   const appKey = hydro ? MOCK_HYDRO_APP_KEY : MOCK_APP_KEY;
   const now = options.now ?? new Date();
   const data = createFixtures(now);
-  if (hydro) for (const node of data.nodes) node.daemon_type = 'wings';
+  if (hydro) {
+    for (const node of data.nodes) node.daemon_type = 'wings';
+    // Other uuids than the Pterodactyl mock, so one test can run both behind the same node.
+    for (const server of data.servers) server.uuid = `e${server.uuid.slice(1)}`;
+  }
   const log: string[] = [];
   const failures: number[] = [];
   const commands: Record<string, string[]> = {};
@@ -255,7 +261,7 @@ export function createMockPanel(options: MockOptions = {}): MockPanel {
     if (method === 'GET' && area === 'websocket') {
       requireNode(server);
       tokenCounter += 1;
-      const token = `mock-jwt-${server.identifier}-${tokenCounter}`;
+      const token = `mock-jwt-${flavor}-${server.identifier}-${tokenCounter}`;
       validTokens.set(token, server.identifier);
       const host = nodeOrigin(server).replace('https://', 'wss://');
       return json(200, { data: { token, socket: `${host}/api/servers/${server.uuid}/ws` } });
@@ -830,6 +836,7 @@ export function createMockPanel(options: MockOptions = {}): MockPanel {
     },
     handle,
     fetch: mockFetch,
+    ownsSocket: (url) => data.servers.some((s) => url.includes(`/api/servers/${s.uuid}/ws`)),
     openConsole,
     socketFactory,
   };

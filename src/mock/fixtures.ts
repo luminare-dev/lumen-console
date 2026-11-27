@@ -149,7 +149,7 @@ export function createFixtures(now: Date = new Date()): MockData {
 
   const nodes = [
     node(1, 'fsn-1', 'node1.example.net', 1, 32768, 409600, 12288, 81920),
-    node(2, 'hel-2', 'node2.example.net', 2, 16384, 204800, 15360, 190000),
+    node(2, 'hel-2', 'node2.example.net', 2, 16384, 204800, 16000, 190000),
   ];
 
   const locations: Location[] = [
