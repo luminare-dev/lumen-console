@@ -21,7 +21,7 @@ type TabLabel = 'tab.servers' | 'tab.admin' | 'tab.alerts' | 'tab.settings';
 
 const TABS: { tab: Tab; label: TabLabel; icon: string }[] = [
   { tab: 'servers', label: 'tab.servers', icon: '▤' },
-  { tab: 'admin', label: 'tab.admin', icon: '⛭' },
+  { tab: 'admin', label: 'tab.admin', icon: '◈' },
   { tab: 'alerts', label: 'tab.alerts', icon: '△' },
   { tab: 'settings', label: 'tab.settings', icon: '⚙' },
 ];
