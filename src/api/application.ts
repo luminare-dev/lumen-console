@@ -2,6 +2,7 @@
 // application key (Admin → Application API) of a root admin; each key has its own read/write
 // permissions per resource, so a 403 on one screen can be the key's setting.
 
+import { PanelError } from './errors';
 import { attributes, Http, seg, type FetchLike } from './http';
 import type { AppServer, Egg, Location, Nest, NodeAllocation, PanelNode, PanelStatus, PanelUser, UserCreate, UserUpdate } from './types';
 
@@ -81,6 +82,18 @@ export class ApplicationApi {
 
   async node(id: number): Promise<PanelNode> {
     return attributes<PanelNode>(await this.http.request('GET', `${APPLICATION_PREFIX}/nodes/${seg(id)}`), 'node');
+  }
+
+  /**
+   * The node's daemon token, from its Wings configuration (needs read access to nodes). Only the
+   * token is kept; the rest of the configuration (TLS paths, panel address) is dropped. The caller
+   * keeps it in memory only and never logs or shows it.
+   */
+  async daemonToken(nodeId: number): Promise<string> {
+    const config = await this.http.request<unknown>('GET', `${APPLICATION_PREFIX}/nodes/${seg(nodeId)}/configuration`);
+    const token = typeof config === 'object' && config !== null ? (config as { token?: unknown }).token : undefined;
+    if (typeof token !== 'string' || token.trim() === '') throw new PanelError('invalidResponse', 'the node configuration has no token');
+    return token.trim();
   }
 
   /**

@@ -1,4 +1,3 @@
-import { MOCK_DAEMON_TOKEN } from '../src/mock/fixtures';
 import { connect, expect, openServer, test } from './fixtures';
 
 // Phone-size screenshots in dark and light for the visual check (CI artifact "screenshots");
@@ -55,9 +54,8 @@ for (const scheme of ['dark', 'light'] as const) {
       await expect(page.getByTestId('node-state-2')).toHaveText('Unreachable');
       await shot('nodes');
       await page.getByTestId('row-node-1').click();
-      await page.getByTestId('node-token').fill(MOCK_DAEMON_TOKEN);
-      await page.getByTestId('token-save').click();
       await expect(page.getByTestId('node-wings')).toContainText('1.11.13');
+      await expect(page.getByTestId('node-token-source')).toBeVisible();
       await shot('node');
 
       await page.getByTestId('tab-alerts').click();
@@ -66,6 +64,16 @@ for (const scheme of ['dark', 'light'] as const) {
 
       await page.getByTestId('tab-settings').click();
       await shot('settings');
+    });
+
+    test(`node token fallback (${scheme})`, async ({ page, mock }) => {
+      mock.allowNodeConfiguration(false);
+      await connect(page, mock, { name: 'Game panel', admin: true });
+      await page.getByTestId('tab-admin').click();
+      await page.getByTestId('admin-adminNodes').click();
+      await page.getByTestId('row-node-1').click();
+      await expect(page.getByTestId('node-token-panel-error')).toBeVisible();
+      await page.screenshot({ path: `screenshots/node-token-fallback-${scheme}.png` });
     });
 
     test(`account without an application key (${scheme})`, async ({ page, mock }) => {

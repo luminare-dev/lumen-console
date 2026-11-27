@@ -18,6 +18,11 @@ panel (*Settings → Panels → a panel*).
 
 Suspended, installing or restoring servers and nodes in maintenance mode are not watched.
 
+The node probe needs no daemon token: a running Wings answers 401, and no answer means
+unreachable. The check therefore never reads node configurations from the panel, so the daemon
+tokens the node screen gets from the panel stay in memory and never reach the background task. A
+token an admin pasted for a node is used if there is one.
+
 The panel does not say whether a server stopped on purpose or crashed: Wings reports a crash only
 as a message on the console socket, which a background check does not keep open. The alert
 therefore says "stopped or crashed".
@@ -33,8 +38,8 @@ first 15. Large panels are better watched with the push relay below.
 On Android and iOS the check runs as a background task, asked for every 30 minutes. The task uses
 `expo-background-task` (WorkManager on Android, BGTaskScheduler on iOS), the replacement Expo
 recommends for the deprecated `expo-background-fetch`; notifications are local
-(`expo-notifications`). Keys and daemon tokens are read from the keychain/keystore with "after
-first unlock" access, so the check works while the phone is locked. The task is registered once a
+(`expo-notifications`). Keys and pasted daemon tokens are read from the keychain/keystore with
+"after first unlock" access, so the check works while the phone is locked. The task is registered once a
 panel is saved and the setting is on.
 
 Limits:

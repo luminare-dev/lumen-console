@@ -61,6 +61,8 @@ export interface MockPanel {
   uploads: { directory: string; name: string }[];
   /** Answers the next n panel requests with this status. */
   failNext(status: number, count?: number): void;
+  /** false: the application key may not read node configurations (403), like a key without node read access. */
+  allowNodeConfiguration(allowed: boolean): void;
   /** null means the host does not answer (network error). */
   handle(request: MockRequest): MockResponse | null;
   fetch: FetchLike;
@@ -172,6 +174,7 @@ export function createMockPanel(options: MockOptions = {}): MockPanel {
   let tokenCounter = 0;
   const validTokens = new Map<string, string>();
   let nextBackup = 3;
+  let nodeConfiguration = true;
 
   const account = () => data.users.find((u) => u.id === data.accountId) as PanelUser;
   const nodeOf = (server: MockServer) => data.nodes.find((n) => n.id === server.node);
@@ -581,6 +584,20 @@ export function createMockPanel(options: MockOptions = {}): MockPanel {
       const node = data.nodes.find((n) => String(n.id) === second);
       if (!node) throw new HttpError(404, 'The requested resource could not be found on the server.');
       if (method === 'GET' && !third) return json(200, item('node', node));
+      if (method === 'GET' && third === 'configuration') {
+        // Wings' config.yml as JSON (NodeConfigurationController); token is what Wings checks.
+        if (!nodeConfiguration) throw new HttpError(403, 'This action is unauthorized.');
+        return json(200, {
+          debug: false,
+          uuid: node.uuid,
+          token_id: `mockTokenId${node.id}`,
+          token: node.id === 1 ? MOCK_DAEMON_TOKEN : `${MOCK_DAEMON_TOKEN}-${node.id}`,
+          api: { host: '0.0.0.0', port: node.daemon_listen, ssl: { enabled: node.scheme === 'https', cert: `/etc/letsencrypt/live/${node.fqdn}/fullchain.pem`, key: `/etc/letsencrypt/live/${node.fqdn}/privkey.pem` }, upload_limit: node.upload_size },
+          system: { data: node.daemon_base, sftp: { bind_port: node.daemon_sftp } },
+          allowed_mounts: [],
+          remote: origin,
+        });
+      }
       if (method === 'GET' && third === 'allocations') {
         const [total, assigned] = data.nodeAllocations[node.id] ?? [0, 0];
         const filter = query.get('filter[server_id]');
@@ -833,6 +850,9 @@ export function createMockPanel(options: MockOptions = {}): MockPanel {
     uploads,
     failNext(status, count = 1) {
       for (let i = 0; i < count; i += 1) failures.push(status);
+    },
+    allowNodeConfiguration(allowed) {
+      nodeConfiguration = allowed;
     },
     handle,
     fetch: mockFetch,

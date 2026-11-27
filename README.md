@@ -72,8 +72,9 @@ keeping the app open, and Hydrodactyl, which moves its server endpoints below th
 - Users: list, search, create, edit; suspend or unsuspend all servers of a user (the panel has no
   account suspension).
 - All servers: search, details, suspend/unsuspend, reinstall (confirmed by typing the name).
-- Nodes: allocated memory and disk, allocation usage, maintenance, a Wings probe, and with the
-  node's daemon token Wings' own system information. Locations; nests and eggs (read-only).
+- Nodes: allocated memory and disk, allocation usage, maintenance, a Wings probe, and Wings' own
+  system information with the node's daemon token, read from the panel or pasted. Locations;
+  nests and eggs (read-only).
 
 **Alerts**: server stopped or crashed, server or node unreachable, disk and memory thresholds,
 node over-allocation and failed backups, checked in the background on Android and iOS with local
@@ -91,9 +92,10 @@ Every endpoint used, and what is not used and why, is in [docs/api.md](docs/api.
 
 ## Security
 
-- Keys and daemon tokens are stored with `expo-secure-store` (iOS Keychain, Android Keystore),
-  readable after the first unlock so the background check works. They are never written to app
-  storage or logs, and a daemon token is sent only to its own node.
+- Keys and pasted daemon tokens are stored with `expo-secure-store` (iOS Keychain, Android
+  Keystore), readable after the first unlock so the background check works. Daemon tokens read
+  from the panel stay in memory only. Nothing is written to app storage or logs, and a daemon
+  token is sent only to its own node.
 - On the **web** keys live only in the browser tab's session storage and are gone when the tab is
   closed; the app says so. Panels and Wings normally do not allow other web origins (CORS and the
   console's origin check), so the web build is mainly a preview and the test target.

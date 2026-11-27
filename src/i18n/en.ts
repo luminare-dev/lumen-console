@@ -291,7 +291,7 @@ export const en = {
   'nodes.maintenance': 'Maintenance',
   'nodes.allocatedShort': 'memory {memory} %, disk {disk} % allocated',
   'nodes.probeNote':
-    'Online means the node’s Wings answered. Without a daemon token the app only checks that it answers; with one it also reads Wings’ system information.',
+    'Online means the node’s Wings answered. This list only checks that it answers; open a node to read Wings’ system information with its daemon token.',
   'nodes.address': 'Address',
   'nodes.location': 'Location',
   'nodes.daemon': 'Daemon',
@@ -307,6 +307,14 @@ export const en = {
   'nodes.kernel': 'Kernel',
   'nodes.noToken': 'Add the node’s daemon token to read its system information. The node answers, so it is up.',
   'nodes.unreachableDetail': 'The node did not answer: {reason}',
+  'nodes.tokenRejectedDetail': 'Wings did not accept the daemon token. It may have been changed on the node.',
+  'nodes.tokenFromPanel':
+    'The daemon token comes from the panel through the application key. The app keeps it in memory only, never shows it and sends it only to this node.',
+  'nodes.tokenManual': 'Uses the daemon token you saved for this node instead of the one from the panel.',
+  'nodes.tokenPanelForbidden':
+    'The application key may not read this node’s configuration, so the app can’t get the daemon token from the panel. Give the key read access to Nodes, or paste the token below.',
+  'nodes.tokenPanelFailed': 'The panel did not hand out the daemon token ({reason}). You can paste it below.',
+  'nodes.tokenOverride': 'Use a different token',
   'nodes.token': 'Daemon token',
   'nodes.tokenHint':
     'The value of token (not token_id) in the node’s Wings config.yml. It gives full control of the node, so it is stored only on this device and sent only to this node.',

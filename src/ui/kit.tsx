@@ -547,7 +547,7 @@ export function Disclosure({ label, children, testID }: { label: string; childre
           {`${open ? '▾' : '▸'} ${label}`}
         </T>
       </Pressable>
-      {open ? <View testID={testID ? `${testID}-body` : undefined}>{typeof children === 'string' ? <T variant="muted">{children}</T> : children}</View> : null}
+      {open ? <View style={{ gap: theme.space(2) }} testID={testID ? `${testID}-body` : undefined}>{typeof children === 'string' ? <T variant="muted">{children}</T> : children}</View> : null}
     </View>
   );
 }

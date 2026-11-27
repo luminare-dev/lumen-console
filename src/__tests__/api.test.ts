@@ -245,6 +245,33 @@ describe('Application API', () => {
   });
 });
 
+describe('node daemon token', () => {
+  it('reads only the token from the node configuration', async () => {
+    const { mock, admin } = setup();
+    await expect(admin.daemonToken(1)).resolves.toBe(MOCK_DAEMON_TOKEN);
+    expect(mock.log).toContain('GET /api/application/nodes/1/configuration');
+    expect(mock.log.join('\n')).not.toContain(MOCK_DAEMON_TOKEN);
+    const result = await probeNode(MOCK_NODE_ORIGIN, { token: await admin.daemonToken(1), fetch: mock.fetch });
+    expect(result.state === 'online' && result.system?.version).toBe('1.11.13');
+  });
+
+  it('fails with forbidden when the key may not read nodes, without the token in the error', async () => {
+    const { mock, admin } = setup();
+    mock.allowNodeConfiguration(false);
+    const error = await rejection(admin.daemonToken(1));
+    expect(error.kind).toBe('forbidden');
+    expect(`${error.message} ${error.apiMessage ?? ''}`).not.toContain(MOCK_DAEMON_TOKEN);
+    mock.allowNodeConfiguration(true);
+    await expect(rejection(admin.daemonToken(99))).resolves.toMatchObject({ kind: 'notFound' });
+  });
+
+  it('refuses a configuration without a token', async () => {
+    const fetchImpl = async () => ({ status: 200, ok: true, text: async () => JSON.stringify({ uuid: 'x' }) }) as unknown as Response;
+    const admin = new ApplicationApi({ origin: 'https://panel.example.net', key: 'ptla_x', fetch: fetchImpl });
+    await expect(rejection(admin.daemonToken(1))).resolves.toMatchObject({ kind: 'invalidResponse' });
+  });
+});
+
 describe('Wings probe', () => {
   it('sees a running daemon without a token', async () => {
     const { mock } = setup();

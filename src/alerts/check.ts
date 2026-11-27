@@ -93,6 +93,8 @@ async function nodeSnapshots(admin: ApplicationApi, entry: PanelEntry, secrets: 
   for (const node of nodes) {
     let reachable: boolean | undefined;
     try {
+      // Reachability needs no token (a running Wings answers 401). The check never asks the panel
+      // for node configurations; it uses only a token pasted for the node.
       const token = entry.tokenNodes.includes(node.id) ? await secrets.get(secretName.daemon(entry.id, node.id)) : null;
       const probe = await probeNode(daemonOrigin(node), { token: token ?? undefined, fetch: fetchImpl });
       reachable = probe.state !== 'unreachable';

@@ -4,8 +4,8 @@ The app talks to three APIs, always over https:
 
 1. the panel's **Client API** (`/api/client`), with a client key of the user's account;
 2. the panel's **Application API** (`/api/application`), optional, with an application key;
-3. the **Wings** daemon of each node, only for the node health probe and, with a daemon token an
-   admin enters, its system information. The live console also connects to the node, with a
+3. the **Wings** daemon of each node, only for the node health probe and, with the node's daemon
+   token, its system information. The live console also connects to the node, with a
    short-lived token the panel issues.
 
 Neither panel publishes an OpenAPI document. The endpoints and shapes below were read from the
@@ -104,6 +104,7 @@ always sends its own origin, so the **web build** connects only to nodes that li
 | `/api/application/servers/{id}/reinstall` | POST | Reinstall (confirmed by typing the name) |
 | `/api/application/nodes` | GET | Nodes with allocated memory/disk; alerts |
 | `/api/application/nodes/{id}` | GET | Node detail |
+| `/api/application/nodes/{id}/configuration` | GET | The node's daemon token for the Wings call on the node screen (only `token` is kept, in memory) |
 | `/api/application/nodes/{id}/allocations` | GET | Allocation usage from two one-item pages: all, and `filter[server_id]=none` (free) |
 | `/api/application/locations` | GET | Locations with their node count |
 | `/api/application/nests`, `/nests/{id}/eggs` | GET | Nests and eggs (read-only) |
@@ -117,11 +118,20 @@ always sends its own origin, so the **web build** connects only to nodes that li
 | the same | `Bearer <daemon token>` | Wings version, Docker version, running/total containers, OS, kernel, threads, memory |
 | signed `/download/file`, `/download/backup`, `/upload/file` links | JWT in the link | Downloads and uploads issued by the panel |
 
-The daemon token gives full control of a node. The app uses it only when an admin enters it for
-that node; it is stored in the keychain and sent only to that node. The app does **not** read it
-from `GET /api/application/nodes/{id}/configuration`, which returns it to any application key with
-node read access: copying node secrets to phones should be a deliberate step. Nodes on `http://`
-are not probed and never get a token.
+The daemon token gives full control of a node, so the app handles it like this:
+
+- **From the panel (default with an application key).** When a node's screen opens, the app reads
+  `GET /api/application/nodes/{id}/configuration` (Wings' `config.yml` as JSON; the key needs read
+  access to nodes) and keeps only `token` (not `token_id`). The token stays in memory while the app
+  runs: it is never written to the keychain or AsyncStorage, never logged and never shown. It is
+  sent only to that node. It is dropped when the panel or its application key is removed or
+  replaced, and read again after a restart or when Wings rejects it (the token was rotated). The
+  nodes list only probes reachability and never asks for the configuration.
+- **Pasted (override and fallback).** An admin can still paste the token for a node, for example
+  when the key may not read nodes (403) or the panel has no configuration endpoint (404); the
+  node screen says why the panel token is missing. A pasted token is kept in the keychain and
+  takes precedence over the panel's.
+- Nodes on `http://` are not probed and never get a token.
 
 Without a token, node health is derived from the panel: reachability from the probe above,
 allocation from `allocated_resources` against `memory`/`disk`, maintenance mode, and the servers'

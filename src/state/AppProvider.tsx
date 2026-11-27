@@ -24,7 +24,8 @@ import {
   type KeyValueStore,
   type PanelEntry,
 } from './panels';
-import { secretName, secretStore, type SecretStore } from './secrets';
+import { createDaemonTokenCache, resolveDaemonToken, type ResolvedToken, type ResolveOptions } from './daemonTokens';
+import { secretStore, type SecretStore } from './secrets';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from './settings';
 
 export interface AppState {
@@ -49,7 +50,8 @@ export interface AppState {
   updatePanel(id: string, patch: Partial<Pick<PanelEntry, 'name' | 'alerts'>>): Promise<void>;
   setApplicationKey(id: string, key: string | null): Promise<void>;
   setDaemonToken(nodeId: number, token: string | null): Promise<void>;
-  daemonToken(nodeId: number): Promise<string | null>;
+  /** The token for a node's Wings API of the active panel: pasted, or (fromPanel) read from the panel. */
+  daemonToken(nodeId: number, options?: ResolveOptions): Promise<ResolvedToken>;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -73,6 +75,10 @@ export function AppProvider({ children, store = AsyncStorage, secrets = secretSt
   const [activeId, setActiveId] = useState<string | null>(null);
   const [apis, setApis] = useState<{ client: ClientApi | null; admin: ApplicationApi | null }>({ client: null, admin: null });
   const scheme = useColorScheme();
+  // Daemon tokens read from the panel: memory only, per panel and node.
+  const [tokenCache] = useState(createDaemonTokenCache);
+  // Bumped when a key is saved again, so the API clients pick up a replaced key.
+  const [keyRound, setKeyRound] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +107,7 @@ export function AppProvider({ children, store = AsyncStorage, secrets = secretSt
   }, [ready, hasPanels, settings.backgroundChecks]);
 
   const active = useMemo(() => panels.find((p) => p.id === activeId) ?? null, [panels, activeId]);
-  const activeKey = active ? `${active.id}|${active.origin}|${active.hasApplicationKey}` : '';
+  const activeKey = active ? `${active.id}|${active.origin}|${active.hasApplicationKey}|${keyRound}` : '';
 
   useEffect(() => {
     let cancelled = false;
@@ -115,7 +121,7 @@ export function AppProvider({ children, store = AsyncStorage, secrets = secretSt
     return () => {
       cancelled = true;
     };
-    // Only a change of panel, address or key presence needs new clients.
+    // Only a change of panel, address or keys needs new clients.
   }, [activeKey, secrets]);
 
   const updateSettings = useCallback(
@@ -140,16 +146,19 @@ export function AppProvider({ children, store = AsyncStorage, secrets = secretSt
   const addPanel = useCallback(
     async (input: AddPanelInput) => {
       const { entry, panels: next } = await addPanelTo(input, { store, secrets });
+      tokenCache.forget(entry.id);
+      setKeyRound((n) => n + 1);
       setPanels(next);
       selectPanel(entry.id);
       return entry;
     },
-    [store, secrets, selectPanel]
+    [store, secrets, selectPanel, tokenCache]
   );
 
   const removePanel = useCallback(
     async (id: string) => {
       const next = await removePanelFrom(id, { store, secrets });
+      tokenCache.forget(id);
       setPanels(next);
       if (activeId === id) {
         const fallback = next[0]?.id ?? null;
@@ -158,7 +167,7 @@ export function AppProvider({ children, store = AsyncStorage, secrets = secretSt
         else void store.removeItem(ACTIVE_KEY).catch(() => undefined);
       }
     },
-    [store, secrets, activeId]
+    [store, secrets, activeId, tokenCache]
   );
 
   const updatePanel = useCallback(
@@ -172,9 +181,12 @@ export function AppProvider({ children, store = AsyncStorage, secrets = secretSt
     async (id: string, key: string | null) => {
       const entry = panels.find((p) => p.id === id);
       if (!entry) return;
-      setPanels(await setApplicationKeyOf(entry, key, { store, secrets }));
+      const next = await setApplicationKeyOf(entry, key, { store, secrets });
+      tokenCache.forget(id);
+      setKeyRound((n) => n + 1);
+      setPanels(next);
     },
-    [panels, store, secrets]
+    [panels, store, secrets, tokenCache]
   );
 
   const setDaemonToken = useCallback(
@@ -185,9 +197,11 @@ export function AppProvider({ children, store = AsyncStorage, secrets = secretSt
     [active, store, secrets]
   );
 
+  const admin = apis.admin;
   const daemonToken = useCallback(
-    async (nodeId: number) => (active && active.tokenNodes.includes(nodeId) ? secrets.get(secretName.daemon(active.id, nodeId)) : null),
-    [active, secrets]
+    async (nodeId: number, options?: ResolveOptions): Promise<ResolvedToken> =>
+      active ? resolveDaemonToken(active, nodeId, { secrets, admin, cache: tokenCache }, options) : { token: null, source: null },
+    [active, secrets, admin, tokenCache]
   );
 
   const language: Language = settings.language === 'system' ? pickLanguage(getLocales().map((l) => l.languageCode)) : settings.language;

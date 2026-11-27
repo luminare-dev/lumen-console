@@ -293,7 +293,7 @@ export const de: Record<keyof typeof en, string> = {
   'nodes.maintenance': 'Wartung',
   'nodes.allocatedShort': 'Arbeitsspeicher {memory} %, Speicherplatz {disk} % vergeben',
   'nodes.probeNote':
-    'Online heißt: Wings auf der Node hat geantwortet. Ohne Daemon-Token prüft die App nur, ob sie antwortet; mit Token liest sie auch die Systeminformationen von Wings.',
+    'Online heißt: Wings auf der Node hat geantwortet. Diese Liste prüft nur, ob sie antwortet; öffne eine Node, um mit ihrem Daemon-Token die Systeminformationen von Wings zu lesen.',
   'nodes.address': 'Adresse',
   'nodes.location': 'Standort',
   'nodes.daemon': 'Daemon',
@@ -309,6 +309,14 @@ export const de: Record<keyof typeof en, string> = {
   'nodes.kernel': 'Kernel',
   'nodes.noToken': 'Füge das Daemon-Token der Node hinzu, um ihre Systeminformationen zu lesen. Die Node antwortet, sie läuft also.',
   'nodes.unreachableDetail': 'Die Node hat nicht geantwortet: {reason}',
+  'nodes.tokenRejectedDetail': 'Wings hat das Daemon-Token nicht angenommen. Vielleicht wurde es auf der Node geändert.',
+  'nodes.tokenFromPanel':
+    'Das Daemon-Token kommt über den Application-Schlüssel vom Panel. Die App hält es nur im Arbeitsspeicher, zeigt es nie an und sendet es nur an diese Node.',
+  'nodes.tokenManual': 'Nutzt das Daemon-Token, das du für diese Node gespeichert hast, statt des Tokens vom Panel.',
+  'nodes.tokenPanelForbidden':
+    'Der Application-Schlüssel darf die Konfiguration dieser Node nicht lesen, daher kann die App das Daemon-Token nicht vom Panel holen. Gib dem Schlüssel Lesezugriff auf Nodes oder füge das Token unten ein.',
+  'nodes.tokenPanelFailed': 'Das Panel hat das Daemon-Token nicht herausgegeben ({reason}). Du kannst es unten einfügen.',
+  'nodes.tokenOverride': 'Anderes Token verwenden',
   'nodes.token': 'Daemon-Token',
   'nodes.tokenHint':
     'Der Wert von token (nicht token_id) in der config.yml von Wings auf der Node. Er gibt volle Kontrolle über die Node, daher wird er nur auf diesem Gerät gespeichert und nur an diese Node gesendet.',

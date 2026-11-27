@@ -3,10 +3,11 @@ import { panelAccountUrl } from '../api/url';
 import { pickLanguage, translator, formatBytes, formatDuration } from '../i18n';
 import { de } from '../i18n/de';
 import { en } from '../i18n/en';
-import { MOCK_HYDRO_VERSION } from '../mock/fixtures';
+import { MOCK_DAEMON_TOKEN, MOCK_HYDRO_VERSION } from '../mock/fixtures';
 import { createMockPanel } from '../mock/server';
 import { twoFactorView } from '../state/account';
 import { addPanel, apisFor, loadPanels, PANELS_KEY, removePanel, setApplicationKey, setDaemonToken, type KeyValueStore } from '../state/panels';
+import { createDaemonTokenCache, resolveDaemonToken } from '../state/daemonTokens';
 import { createMemorySecretStore } from '../state/secrets';
 import { DEFAULT_SETTINGS, sanitizeSettings } from '../state/settings';
 
@@ -80,6 +81,70 @@ describe('panels', () => {
     expect(await secrets.get(`app.${entry.id}`)).toBeNull();
     expect(await secrets.get(`wings.${entry.id}.1`)).toBeNull();
     expect(await loadPanels(store)).toEqual([]);
+  });
+});
+
+describe('daemon tokens from the panel', () => {
+  const configCalls = (log: string[]) => log.filter((l) => l.endsWith('/configuration')).length;
+
+  async function setupPanel() {
+    const mock = createMockPanel();
+    const store = memoryStore();
+    const secrets = createMemorySecretStore();
+    const deps = { store, secrets, fetch: mock.fetch };
+    const { entry } = await addPanel({ name: 'Main', url: mock.origin, clientKey: mock.clientKey, applicationKey: mock.appKey }, deps);
+    const { admin } = await apisFor(entry, secrets, mock.fetch);
+    return { mock, store, secrets, deps, entry, admin, cache: createDaemonTokenCache() };
+  }
+
+  it('fetches the token once, keeps it in memory only and fetches again after forget or refresh', async () => {
+    const { mock, store, secrets, entry, admin, cache } = await setupPanel();
+    const deps = { secrets, admin, cache };
+    const [a, b] = await Promise.all([resolveDaemonToken(entry, 1, deps, { fromPanel: true }), resolveDaemonToken(entry, 1, deps, { fromPanel: true })]);
+    expect(a).toEqual({ token: MOCK_DAEMON_TOKEN, source: 'panel' });
+    expect(b).toEqual(a);
+    expect(configCalls(mock.log)).toBe(1);
+    expect(await secrets.get(`wings.${entry.id}.1`)).toBeNull();
+    expect([...store.data.values()].join('\n')).not.toContain(MOCK_DAEMON_TOKEN);
+    await resolveDaemonToken(entry, 1, deps, { fromPanel: true, refresh: true });
+    expect(configCalls(mock.log)).toBe(2);
+    cache.forget(entry.id);
+    expect(cache.has(entry.id, 1)).toBe(false);
+    await resolveDaemonToken(entry, 1, deps, { fromPanel: true });
+    expect(configCalls(mock.log)).toBe(3);
+  });
+
+  it('asks the panel only when told to and only with an application key', async () => {
+    const { mock, secrets, entry, admin, cache } = await setupPanel();
+    await expect(resolveDaemonToken(entry, 1, { secrets, admin, cache })).resolves.toEqual({ token: null, source: null });
+    await expect(resolveDaemonToken(entry, 1, { secrets, admin: null, cache }, { fromPanel: true })).resolves.toEqual({ token: null, source: null });
+    expect(configCalls(mock.log)).toBe(0);
+  });
+
+  it('prefers a pasted token and falls back to it when the key may not read nodes', async () => {
+    const { mock, secrets, deps, entry, admin, cache } = await setupPanel();
+    mock.allowNodeConfiguration(false);
+    const denied = await resolveDaemonToken(entry, 1, { secrets, admin, cache }, { fromPanel: true });
+    expect(denied).toMatchObject({ token: null, source: null, panelError: { kind: 'forbidden' } });
+    expect(cache.has(entry.id, 1)).toBe(false); // a failure is not cached
+    const [withToken] = await setDaemonToken(entry, 1, 'pasted-token', deps);
+    await expect(resolveDaemonToken(withToken, 1, { secrets, admin, cache }, { fromPanel: true })).resolves.toEqual({ token: 'pasted-token', source: 'manual' });
+    mock.allowNodeConfiguration(true);
+    await expect(resolveDaemonToken(withToken, 1, { secrets, admin, cache }, { fromPanel: true })).resolves.toEqual({ token: 'pasted-token', source: 'manual' });
+    expect(configCalls(mock.log)).toBe(1);
+  });
+
+  it('forgets one panel without touching another', () => {
+    const cache = createDaemonTokenCache();
+    void cache.get('p1', 1, async () => 'a');
+    void cache.get('p1', 2, async () => 'b');
+    void cache.get('p10', 1, async () => 'c');
+    cache.forget('p1', 2);
+    expect(cache.has('p1', 2)).toBe(false);
+    expect(cache.has('p1', 1)).toBe(true);
+    cache.forget('p1');
+    expect(cache.has('p1', 1)).toBe(false);
+    expect(cache.has('p10', 1)).toBe(true);
   });
 });
 

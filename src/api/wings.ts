@@ -1,8 +1,8 @@
 // Node health straight from the Wings daemon. Wings has no public status endpoint: everything
-// below /api needs the node's daemon token, which the panel never hands to a client. The app
-// therefore uses the token only when an admin enters it for that node (stored like an API key).
-// Without a token it still learns whether the daemon answers: an unauthenticated request to
-// /api/system gets 401 from a running Wings.
+// below /api needs the node's daemon token. With an application key the app reads the token from
+// the panel's node configuration (kept in memory only, see state/daemonTokens.ts); an admin can
+// also paste it for a node (kept like an API key). Without a token it still learns whether the
+// daemon answers: an unauthenticated request to /api/system gets 401 from a running Wings.
 
 import { classifyFetchError, kindForStatus, PanelError } from './errors';
 import type { FetchLike } from './http';

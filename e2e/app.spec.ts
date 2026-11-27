@@ -277,18 +277,23 @@ test.describe('admin', () => {
     expect(mock.data.servers[1].status).toBe('installing');
   });
 
-  test('shows node health, allocation usage and Wings details with a token', async ({ page, mock }) => {
+  test('shows node health, allocation usage and Wings details with the token from the panel', async ({ page, mock }) => {
     await connect(page, mock, { admin: true });
     await page.getByTestId('tab-admin').click();
     await page.getByTestId('admin-adminNodes').click();
     await expect(page.getByTestId('node-state-1')).toHaveText('Online');
     await expect(page.getByTestId('node-state-2')).toHaveText('Unreachable');
+    // The list only checks reachability; it never asks for a node configuration.
+    expect(mock.log.filter((l) => l.endsWith('/configuration'))).toEqual([]);
     await page.getByTestId('row-node-1').click();
     await expect(page.getByTestId('node-allocations')).toContainText('9 of 40 ports assigned');
-    await expect(page.getByTestId('node-wings')).toContainText('daemon token');
-    await page.getByTestId('node-token').fill(MOCK_DAEMON_TOKEN);
-    await page.getByTestId('token-save').click();
     await expect(page.getByTestId('node-wings')).toContainText('1.11.13');
+    await expect(page.getByTestId('node-token-source')).toContainText('comes from the panel');
+    expect(mock.log).toContain('GET /api/application/nodes/1/configuration');
+    await expect(page.locator('body')).not.toContainText(MOCK_DAEMON_TOKEN);
+    await expect(page.getByTestId('node-token')).toBeHidden();
+    await page.getByTestId('token-override').click();
+    await expect(page.getByTestId('node-token')).toBeVisible();
     await expect(page.getByTestId('node-wings')).toContainText('Ubuntu 24.04.1 LTS');
     await page.getByTestId('back').click();
     await page.getByTestId('back').click();
@@ -298,6 +303,25 @@ test.describe('admin', () => {
     await page.getByTestId('admin-adminNests').click();
     await page.getByTestId('nest-1').click();
     await expect(page.getByTestId('egg-1')).toContainText('Voxel');
+  });
+
+  test('falls back to a pasted daemon token when the key may not read nodes', async ({ page, mock }) => {
+    mock.allowNodeConfiguration(false);
+    await connect(page, mock, { admin: true });
+    await page.getByTestId('tab-admin').click();
+    await page.getByTestId('admin-adminNodes').click();
+    await page.getByTestId('row-node-1').click();
+    await expect(page.getByTestId('node-token-panel-error')).toContainText('read access to Nodes');
+    await expect(page.getByTestId('node-state')).toHaveText('Online');
+    await page.getByTestId('node-token').fill(MOCK_DAEMON_TOKEN);
+    await page.getByTestId('token-save').click();
+    await expect(page.getByTestId('node-wings')).toContainText('1.11.13');
+    await expect(page.getByTestId('node-token-source')).toContainText('you saved');
+    await expect(page.getByTestId('node-token-panel-error')).toBeHidden();
+    await expect(page.locator('body')).not.toContainText(MOCK_DAEMON_TOKEN);
+    await page.getByTestId('token-remove').click();
+    await expect(page.getByTestId('node-token-panel-error')).toBeVisible();
+    await expect(page.getByTestId('node-token')).toBeVisible();
   });
 
   test('reads 2FA from the admin API on the account screen', async ({ page, mock }) => {

@@ -8,39 +8,56 @@ import { nodeAllocation } from '../alerts/evaluate';
 import { formatBytes, formatMiB } from '../i18n';
 import { useNav } from '../navigation';
 import { useApp } from '../state/AppProvider';
+import type { DaemonTokenSource } from '../state/daemonTokens';
 import { useResource } from '../state/useResource';
-import { Badge, Button, Card, ErrorPanel, Field, KeyValue, ListRow, Loading, Meter, Notice, Screen, Section, T, type Tone } from '../ui/kit';
+import { Badge, Button, Card, Disclosure, ErrorPanel, Field, KeyValue, ListRow, Loading, Meter, Notice, Screen, Section, T, type Tone } from '../ui/kit';
 import { NeedsAppKey } from './admin';
 
 const asPanelError = (error: unknown) => (error instanceof PanelError ? error : classifyFetchError(error));
 
-/** Probes a node's Wings (with the saved token when there is one). */
-function useProbe(node: PanelNode | undefined): { result: ProbeResult | undefined; reprobe: () => void } {
+interface Probe {
+  result: ProbeResult | undefined;
+  /** Where the token came from: pasted, read from the panel, or none. */
+  source: DaemonTokenSource | null;
+  /** Why the panel did not hand out the token (only with fromPanel). */
+  panelError: PanelError | undefined;
+  reprobe: () => void;
+}
+
+/**
+ * Probes a node's Wings with the pasted token or, with fromPanel, the one the panel hands out
+ * (kept in memory only). A panel token Wings rejects is fetched once more, in case it changed.
+ */
+function useProbe(node: PanelNode | undefined, fromPanel: boolean): Probe {
   const { daemonToken } = useApp();
-  const [result, setResult] = useState<ProbeResult>();
+  const [state, setState] = useState<Omit<Probe, 'reprobe'>>({ result: undefined, source: null, panelError: undefined });
   const [round, setRound] = useState(0);
   useEffect(() => {
     if (!node) return undefined;
     let cancelled = false;
-    setResult(undefined);
+    setState({ result: undefined, source: null, panelError: undefined });
     void (async () => {
       let origin: string;
       try {
         origin = daemonOrigin(node);
       } catch (error) {
-        if (!cancelled) setResult({ state: 'unreachable', reason: asPanelError(error).kind });
+        if (!cancelled) setState({ result: { state: 'unreachable', reason: asPanelError(error).kind }, source: null, panelError: undefined });
         return;
       }
-      const token = await daemonToken(node.id);
-      const next = await probeNode(origin, { token: token ?? undefined });
-      if (!cancelled) setResult(next);
+      let resolved = await daemonToken(node.id, { fromPanel });
+      let result = await probeNode(origin, { token: resolved.token ?? undefined });
+      if (result.state === 'tokenRejected' && resolved.source === 'panel' && !cancelled) {
+        resolved = await daemonToken(node.id, { fromPanel, refresh: true });
+        if (resolved.token) result = await probeNode(origin, { token: resolved.token });
+      }
+      if (!cancelled) setState({ result, source: resolved.source, panelError: resolved.token === null ? resolved.panelError : undefined });
     })();
     return () => {
       cancelled = true;
     };
-  }, [node, daemonToken, round]);
+  }, [node, daemonToken, fromPanel, round]);
   const reprobe = useCallback(() => setRound((n) => n + 1), []);
-  return { result, reprobe };
+  return { ...state, reprobe };
 }
 
 function probeBadge(t: ReturnType<typeof useApp>['t'], result: ProbeResult | undefined, maintenance: boolean): { label: string; tone: Tone } {
@@ -54,7 +71,8 @@ function probeBadge(t: ReturnType<typeof useApp>['t'], result: ProbeResult | und
 function NodeRow({ node }: { node: PanelNode }) {
   const { t } = useApp();
   const nav = useNav();
-  const { result } = useProbe(node);
+  // The list only needs reachability: no panel token is fetched for it.
+  const { result } = useProbe(node, false);
   const badge = probeBadge(t, result, node.maintenance_mode);
   const alloc = nodeAllocation(node);
   return (
@@ -92,11 +110,11 @@ export function AdminNodeScreen({ id }: { id: number }) {
   const usage = useResource(admin, `allocations:${id}`, (a) => a.allocationUsage(id));
   const locations = useResource(admin, 'locations', (a) => a.locations());
   const n = node.data;
-  const { result, reprobe } = useProbe(n);
+  const { result, source, panelError, reprobe } = useProbe(n, true);
   const [token, setToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<PanelError>();
-  const hasToken = active?.tokenNodes.includes(id) ?? false;
+  const hasToken = (active?.tokenNodes.includes(id) ?? false) || source === 'manual';
   const badge = probeBadge(t, result, n?.maintenance_mode ?? false);
 
   const saveToken = async (value: string | null) => {
@@ -112,6 +130,14 @@ export function AdminNodeScreen({ id }: { id: number }) {
       setBusy(false);
     }
   };
+
+  const tokenForm = (
+    <>
+      <Field label={t('nodes.token')} value={token} onChangeText={setToken} secure hint={t('nodes.tokenHint')} testID="node-token" />
+      {error ? <ErrorPanel error={error} /> : null}
+      <Button label={t('nodes.tokenSave')} onPress={() => void saveToken(token)} busy={busy} disabled={token.trim() === ''} testID="token-save" />
+    </>
+  );
 
   const alloc = n ? nodeAllocation(n) : undefined;
   const system = result?.state === 'online' ? result.system : undefined;
@@ -146,16 +172,31 @@ export function AdminNodeScreen({ id }: { id: number }) {
                   <KeyValue label="Docker" value={system.docker.version} />
                 </>
               ) : (
-                <T variant="muted">{result?.state === 'unreachable' ? t('nodes.unreachableDetail', { reason: t(`error.${result.reason}`) }) : hasToken ? t('nodes.checking') : t('nodes.noToken')}</T>
+                <T variant="muted">
+                  {!result
+                    ? t('nodes.checking')
+                    : result.state === 'unreachable'
+                      ? t('nodes.unreachableDetail', { reason: t(`error.${result.reason}`) })
+                      : result.state === 'tokenRejected'
+                        ? t('nodes.tokenRejectedDetail')
+                        : t('nodes.noToken')}
+                </T>
               )}
+              {source === 'panel' ? <T variant="caption" testID="node-token-source">{t('nodes.tokenFromPanel')}</T> : null}
+              {source === 'manual' ? <T variant="caption" testID="node-token-source">{t('nodes.tokenManual')}</T> : null}
+              {panelError ? (
+                <Notice tone="warning" testID="node-token-panel-error">
+                  {panelError.kind === 'forbidden' ? t('nodes.tokenPanelForbidden') : t('nodes.tokenPanelFailed', { reason: t(`error.${panelError.kind}`) })}
+                </Notice>
+              ) : null}
               {hasToken ? (
                 <Button label={t('nodes.tokenRemove')} kind="ghost" compact onPress={() => void saveToken(null)} busy={busy} testID="token-remove" />
+              ) : source === 'panel' ? (
+                <Disclosure label={t('nodes.tokenOverride')} testID="token-override">
+                  {tokenForm}
+                </Disclosure>
               ) : (
-                <>
-                  <Field label={t('nodes.token')} value={token} onChangeText={setToken} secure hint={t('nodes.tokenHint')} testID="node-token" />
-                  {error ? <ErrorPanel error={error} /> : null}
-                  <Button label={t('nodes.tokenSave')} onPress={() => void saveToken(token)} busy={busy} disabled={token.trim() === ''} testID="token-save" />
-                </>
+                tokenForm
               )}
             </Card>
           </Section>
