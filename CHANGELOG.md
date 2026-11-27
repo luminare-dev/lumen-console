@@ -8,6 +8,14 @@ the Conventional Commit titles of the merged pull requests; do not edit entries 
 <!-- release-please inserts each new release above the first line that starts with "## ["
      (or "## " and a digit). Keep the "Origin" entry below as the last entry of this file. -->
 
+## [0.2.0](https://github.com/luminare-dev/lumen-console/compare/v0.1.0...v0.2.0) (2026-11-27)
+
+
+### Added
+
+* explain the hidden 2FA status on the account screen ([995c528](https://github.com/luminare-dev/lumen-console/commit/995c528f8a585a4152752efb4258b67ec63a5cd7))
+* read node daemon tokens from the panel ([312fa64](https://github.com/luminare-dev/lumen-console/commit/312fa64830363852372a2300b813652c8b5df50a))
+
 ## 0.1.0 (2026-11-27)
 
 
