@@ -55,9 +55,23 @@ Limits:
 - The web version has no background checks and no notifications; the *Alerts* tab checks by
   hand and whenever it is opened.
 
-## Follow-up: push relay
+## Push relay
 
-Alerts that must arrive within a minute need a small self-hostable relay next to the panel: a
-service that holds the keys, polls the API (and could keep console sockets open to catch Wings'
-crash messages), and sends pushes through Expo's push service or directly to APNs/FCM. It is
-not part of this app yet.
+Alerts that must arrive within a minute come from
+[Lumen Console Relay](https://github.com/luminare-dev/lumen-console-relay), a small self-hosted
+service next to the panel. It holds a read-only panel key (a dedicated subuser account is
+enough), polls every minute with the same rules and alert ids as this check, keeps the console
+socket of each server open to see crashes within seconds, and pushes through Expo's push service
+or a self-hosted ntfy server. It also checks every server, not only the first 40.
+
+*Settings → Push relay* pairs the phone: enter the relay address and a one-time pairing code
+from `lumen-relay pair`, or scan its QR code with the phone camera (the link
+`lumenconsole://relay?url=…&code=…` opens the screen filled in). Choose ntfy or Expo push, then
+the events per panel (the same four switches as above). The app never sends panel keys to the
+relay; the relay keeps only a device token, and *Unregister* removes it.
+
+A tapped relay push opens the server (`lumenconsole://alert?origin=…&server=…`) or the node.
+
+The background check stays on as a fallback. For panels the relay pushes for (at least one event
+on), it no longer sends its own notifications, so a problem is not notified twice; the *Alerts*
+tab still shows everything it finds.

@@ -149,5 +149,5 @@ allocation from `allocated_resources` against `memory`/`disk`, maintenance mode,
 | Activity logs (`/activity`) | Not shown yet. |
 | Hydrodactyl extras: marketplace (mod installer), subdomains, server groups, webhooks, egg change, startup command editing, Elytra/Calagopus-specific endpoints | Detected panels expose them, but they are new and still changing on the canary branch; the app shows only resource history and the panel status. Listed as follow-ups. |
 | Pyrodactyl and other forks | Treated as Pterodactyl when `/api/client/version` answers 404. |
-| Push notifications | Needs a relay (see [alerts.md](alerts.md)). |
+| Push notifications | Through Lumen Console Relay (see [alerts.md](alerts.md#push-relay)); the relay's device API is documented in its repository. |
 | Web build | Panels and nodes usually send no CORS headers for other origins, so the web build is a preview and the test target, not a supported way to manage a panel. |

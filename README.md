@@ -79,7 +79,9 @@ keeping the app open, and Hydrodactyl, which moves its server endpoints below th
 **Alerts**: server stopped or crashed, server or node unreachable, disk and memory thresholds,
 node over-allocation and failed backups, checked in the background on Android and iOS with local
 notifications, switchable per panel ([how and limits](docs/alerts.md)). No server of ours is
-involved; a push relay is a planned follow-up.
+involved. For alerts within seconds, pair your own
+[Lumen Console Relay](https://github.com/luminare-dev/lumen-console-relay) (self-hosted, Expo push
+or ntfy) under *Settings → Push relay*; the local check stays on as a fallback.
 
 **Hydrodactyl**: detected through its version endpoint; the daemon-type routes, the stored
 resource history and the panel host status are used. Its other additions are listed in
