@@ -107,12 +107,12 @@ async function nodeSnapshots(admin: ApplicationApi, entry: PanelEntry, secrets: 
 }
 
 /** Runs one check; returns the result and the alerts that are new since the previous check. */
-export async function checkAllPanels(deps: CheckDeps): Promise<{ result: CheckResult; fresh: { panel: string; alert: Alert }[] }> {
+export async function checkAllPanels(deps: CheckDeps): Promise<{ result: CheckResult; fresh: { panel: string; origin: string; alert: Alert }[] }> {
   const now = deps.now ?? (() => new Date());
   const previous = await loadLastCheck(deps.store);
   const panels = await loadPanels(deps.store);
   const results: PanelResult[] = [];
-  const fresh: { panel: string; alert: Alert }[] = [];
+  const fresh: { panel: string; origin: string; alert: Alert }[] = [];
 
   for (const entry of panels) {
     const base = { panel: { id: entry.id, name: entry.name } };
@@ -139,7 +139,7 @@ export async function checkAllPanels(deps: CheckDeps): Promise<{ result: CheckRe
       const states: Record<string, PowerState | undefined> = {};
       for (const s of snapshot.servers) states[s.identifier] = s.state ?? before?.states[s.identifier];
       results.push({ ...base, alerts, states });
-      for (const alert of newAlerts(before?.alerts.map((a) => a.id) ?? [], alerts)) fresh.push({ panel: entry.name, alert });
+      for (const alert of newAlerts(before?.alerts.map((a) => a.id) ?? [], alerts)) fresh.push({ panel: entry.name, origin: entry.origin, alert });
     } catch (error) {
       const kind = (error instanceof PanelError ? error : classifyFetchError(error)).kind;
       results.push({ ...base, alerts: [], states: before?.states ?? {}, error: kind });

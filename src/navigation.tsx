@@ -1,5 +1,6 @@
-// A small stack navigator per tab. The app has no deep links, so a router dependency would add
-// more than it saves. Android's back button pops the stack.
+// A small stack navigator per tab. The two deep links (relay pairing, a tapped push) are handled
+// in App.tsx, so a router dependency would add more than it saves. Android's back button pops the
+// stack.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { BackHandler } from 'react-native';
@@ -38,7 +39,8 @@ export type Route =
   | { name: 'connect' }
   | { name: 'panelSettings'; id: string }
   | { name: 'account' }
-  | { name: 'tokens' };
+  | { name: 'tokens' }
+  | { name: 'relay'; url?: string; code?: string };
 
 export interface Navigation {
   tab: Tab;

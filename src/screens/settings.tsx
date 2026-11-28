@@ -45,6 +45,7 @@ export function SettingsScreen() {
       <Section title={t('settings.panels')}>
         <ListRow title={active?.name ?? t('panels.add')} subtitle={t('settings.panelCount', { count: panels.length })} onPress={() => nav.push({ name: 'panels' })} testID="settings-panels" />
         {active ? <ListRow title={t('account.title')} subtitle={active.username} onPress={() => nav.push({ name: 'account' })} testID="settings-account" /> : null}
+        <ListRow title={t('relay.title')} subtitle={t('relay.settingsHint')} onPress={() => nav.push({ name: 'relay' })} testID="settings-relay" />
       </Section>
 
       <Section title={t('settings.language')}>

@@ -1,6 +1,7 @@
 // The background check (Android and iOS only). expo-background-task schedules it through
-// WorkManager (Android) and BGTaskScheduler (iOS); the system decides when it runs. There is no
-// push server: every check runs on the phone and talks to your panels directly.
+// WorkManager (Android) and BGTaskScheduler (iOS); the system decides when it runs. Every check
+// runs on the phone and talks to your panels directly. With a paired push relay the check stays
+// on as a fallback, but does not notify for panels the relay pushes for (no double alerts).
 //
 // This module must be imported at start-up (index.ts), because the task has to be defined in the
 // global scope before the system wakes the app for it.
@@ -15,6 +16,7 @@ import { Platform } from 'react-native';
 import { pickLanguage, translator } from '../i18n';
 import { secretStore } from '../state/secrets';
 import { loadSettings } from '../state/settings';
+import { loadRelay } from '../relay/state';
 import { checkAllPanels } from './check';
 import { alertMessage } from './messages';
 
@@ -41,7 +43,9 @@ if (backgroundSupported) {
       const { fresh } = await checkAllPanels({ store: AsyncStorage, secrets: secretStore, thresholds: settings.thresholds });
       const language = settings.language === 'system' ? pickLanguage(getLocales().map((l) => l.languageCode)) : settings.language;
       const t = translator(language);
-      for (const { panel, alert } of fresh.slice(0, 5)) {
+      const relay = await loadRelay(AsyncStorage);
+      const watched = new Set(relay?.watchedOrigins ?? []);
+      for (const { panel, alert } of fresh.filter((f) => !watched.has(f.origin)).slice(0, 5)) {
         await Notifications.scheduleNotificationAsync({
           content: { title: t(alert.severity === 'critical' ? 'alerts.notificationCritical' : 'alerts.notificationTitle'), body: alertMessage(alert, panel, t) },
           trigger: null,

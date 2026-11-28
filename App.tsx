@@ -13,7 +13,9 @@ import { FileScreen, FilesScreen } from './src/screens/files';
 import { AdminLocationsScreen, AdminNestScreen, AdminNestsScreen, AdminNodeScreen, AdminNodesScreen } from './src/screens/nodes';
 import { BackupsScreen, DatabasesScreen, NetworkScreen, SchedulesScreen, StartupScreen, SubusersScreen } from './src/screens/server-more';
 import { ServerScreen, ServersScreen } from './src/screens/servers';
+import { RelayScreen } from './src/screens/relay';
 import { AccountScreen, SettingsScreen, TokensScreen } from './src/screens/settings';
+import { LinkHandler } from './src/relay/LinkHandler';
 import { AppProvider, useApp } from './src/state/AppProvider';
 import { Loading, styles, T } from './src/ui/kit';
 
@@ -132,6 +134,8 @@ function CurrentScreen() {
       return <AccountScreen />;
     case 'tokens':
       return <TokensScreen />;
+    case 'relay':
+      return <RelayScreen url={route.url} code={route.code} />;
   }
 }
 
@@ -155,6 +159,7 @@ function Shell() {
         <ConnectScreen />
       ) : (
         <NavigationProvider>
+          <LinkHandler />
           <View style={styles.fill}>
             <CurrentScreen />
           </View>
